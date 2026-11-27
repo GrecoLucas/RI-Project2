@@ -1,0 +1,77 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/gctronic/e-puck/protos/E-puck.proto"
+
+WorldInfo {
+  info [
+    "Dynamic Sentinel Experiment (FEUP Intelligent Robotics, group G_A1_17)"
+    "The e-puck must touch the green checkpoint, then reach the blue exit,"
+    "without entering the red field of view of any sentinel."
+  ]
+  title "Dynamic Sentinel Experiment"
+  basicTimeStep 32
+}
+Viewpoint {
+  orientation -0.5774 0.5774 0.5774 2.0944
+  position 0 0 3.6
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 2 2
+  floorTileSize 0.25 0.25
+  wallHeight 0.1
+}
+# Visual markers. Their positions are overwritten at start-up from config.py,
+# so config.py is the single source of truth.
+DEF CHECKPOINT Pose {
+  translation 0.6 -0.6 0.0005
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.1 0.8 0.2
+        transparency 0.3
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.001
+        radius 0.1
+      }
+    }
+  ]
+}
+DEF EXIT Pose {
+  translation 0.75 0.75 0.0005
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.1 0.3 0.9
+        transparency 0.3
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.001
+        radius 0.12
+      }
+    }
+  ]
+}
+# Sentinels (SENTINEL_0, SENTINEL_1, ...) are spawned by the controller
+# according to config.py / the --sentinels argument.
+DEF AGENT E-puck {
+  translation -0.8 -0.8 0
+  name "agent"
+  controller "sentinel_agent"
+  controllerArgs [
+    "--mode"
+    "check"
+  ]
+  supervisor TRUE
+}

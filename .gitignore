@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Training outputs
+models/
+logs/
+
+# Webots
+*.wbproj
+.*.wbproj
+.*.jpg
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

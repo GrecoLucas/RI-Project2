@@ -1,0 +1,9 @@
+# Core RL stack (the Webots "controller" module is provided by Webots itself, not pip)
+stable-baselines3>=2.3,<3
+gymnasium>=0.29,<2
+numpy>=1.24
+torch>=2.1
+tensorboard>=2.14
+
+# Development / tests
+pytest>=7.4
