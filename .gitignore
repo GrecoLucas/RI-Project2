@@ -6,7 +6,8 @@ venv/
 .pytest_cache/
 
 # Training outputs
-models/
+models/*
+!models/stage0_final.zip
 logs/
 
 # Webots
