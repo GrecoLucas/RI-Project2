@@ -18,6 +18,7 @@ Examples (controllerArgs):
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -41,6 +42,8 @@ def parse_args(argv):
     p.add_argument("--run-name", type=str, default="ppo_sentinel", help="prefix for saved models/logs")
     p.add_argument("--realtime", action="store_true", help="run in real-time instead of fast mode")
     p.add_argument("--quit", action="store_true", help="quit Webots when done (useful for headless runs)")
+    p.add_argument("--log-file", type=str, default=None,
+                   help="also write all output (incl. errors) to this file - useful for headless runs")
     return p.parse_args(argv)
 
 
@@ -74,9 +77,16 @@ def run_train(env: SentinelEscapeEnv, args, ppo_cfg: PPOConfig) -> None:
     LOGS_DIR.mkdir(exist_ok=True)
     menv = Monitor(env, info_keywords=("is_success", "detected", "checkpoint_reached"))
 
+    # TensorBoard is optional: without it SB3 would crash at learn(), so fall back to console logs.
+    tb_log = str(LOGS_DIR)
+    if importlib.util.find_spec("tensorboard") is None:
+        print("[train] WARNING: tensorboard not installed -> no TensorBoard logs "
+              "(pip install -r requirements.txt to enable them)")
+        tb_log = None
+
     if args.model:
         print(f"[train] continuing from {args.model}")
-        model = PPO.load(resolve(args.model), env=menv, device=ppo_cfg.device, tensorboard_log=str(LOGS_DIR))
+        model = PPO.load(resolve(args.model), env=menv, device=ppo_cfg.device, tensorboard_log=tb_log)
     else:
         model = PPO(
             "MlpPolicy",
@@ -90,7 +100,7 @@ def run_train(env: SentinelEscapeEnv, args, ppo_cfg: PPOConfig) -> None:
             ent_coef=ppo_cfg.ent_coef,
             seed=ppo_cfg.seed,
             device=ppo_cfg.device,
-            tensorboard_log=str(LOGS_DIR),
+            tensorboard_log=tb_log,
             verbose=1,
         )
 
@@ -130,8 +140,30 @@ def run_eval(env: SentinelEscapeEnv, args) -> None:
     print("[eval] " + "  ".join(f"{k}={v}/{n} ({100 * v / n:.0f}%)" for k, v in stats.items()))
 
 
+class _Tee:
+    """Duplicate a stream into a log file (line-buffered)."""
+
+    def __init__(self, stream, log):
+        self.stream, self.log = stream, log
+
+    def write(self, data):
+        self.stream.write(data)
+        self.log.write(data)
+        self.log.flush()
+
+    def flush(self):
+        self.stream.flush()
+        self.log.flush()
+
+
 def main() -> None:
     args = parse_args(sys.argv[1:])
+    if args.log_file:
+        log_path = resolve(args.log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log = open(log_path, "a", encoding="utf-8")
+        sys.stdout = _Tee(sys.stdout, log)
+        sys.stderr = _Tee(sys.stderr, log)
     robot = Supervisor()
 
     env_cfg, ppo_cfg = EnvConfig(), PPOConfig()

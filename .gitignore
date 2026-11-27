@@ -19,3 +19,6 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Temporary worlds for headless train/eval runs
+worlds/_*.wbt
